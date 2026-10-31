@@ -1,26 +1,34 @@
 {
-  "name": "overhang-showroom",
+  "name": "syam-s-vice-city-portfolio",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "GTA VI Leonida / Vice City inspired cinematic scrollytelling portfolio for Syam S (TPM & Systems Architect)",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
+    "@types/three": "^0.187.0",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.23.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.511.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.7.0",
+    "three": "^0.187.0",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "tailwindcss": "^4.1.0",
-    "typescript": "^5.8.0",
-    "vite": "^7.0.0"
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.0"
   }
 }
