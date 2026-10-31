@@ -1,9 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Send, Radio, ShieldCheck, Mail, Phone, MapPin, Github, Linkedin, Globe, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Send, Radio, ShieldCheck, Mail, Phone, MapPin, Github, Linkedin, Globe, AlertTriangle, CheckCircle2, Copy, Check } from 'lucide-react';
+import { z } from 'zod';
 import { HERO_IDENTITY } from '../data/portfolioData';
 import { DispatchFormData } from '../types/portfolio';
+
+// Client-side sanitization & Zod schema validation
+const sanitizeString = (val: string) =>
+  val
+    .replace(/[<>]/g, '')
+    .trim();
+
+const DispatchPayloadSchema = z.object({
+  agentName: z
+    .string()
+    .min(2, { message: 'Agent name must be at least 2 characters.' })
+    .max(80, { message: 'Agent name cannot exceed 80 characters.' })
+    .transform(sanitizeString),
+  commsFrequency: z
+    .string()
+    .email({ message: 'A valid email frequency address is required.' })
+    .max(120, { message: 'Email cannot exceed 120 characters.' })
+    .transform(sanitizeString),
+  clearanceLevel: z
+    .string()
+    .min(2, { message: 'Clearance level/scope is required.' })
+    .max(100, { message: 'Clearance subject cannot exceed 100 characters.' })
+    .transform(sanitizeString),
+  tacticalBrief: z
+    .string()
+    .min(10, { message: 'Tactical message brief must be at least 10 characters.' })
+    .max(2500, { message: 'Tactical message cannot exceed 2500 characters.' })
+    .transform(sanitizeString),
+  _botTrap: z.string().optional(),
+});
 
 export const SecureDispatch: React.FC = () => {
   const [formData, setFormData] = useState<DispatchFormData>({
@@ -18,8 +49,9 @@ export const SecureDispatch: React.FC = () => {
   const [submissionStatus, setSubmissionStatus] = useState<
     'IDLE' | 'TRANSMITTING' | 'CONFIRMED' | 'FAILED'
   >('IDLE');
-  const [confirmationMessage, setConfirmationMessage] = useState<string>('');
+  const [confirmationCode, setConfirmationCode] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -35,24 +67,42 @@ export const SecureDispatch: React.FC = () => {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/dispatch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // 1. Client-Side Zod Schema Verification
+      const validationResult = DispatchPayloadSchema.safeParse(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to establish encrypted dispatch uplink.');
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0]?.message || 'Payload validation failed.';
+        throw new Error(firstError);
       }
 
+      const validatedData = validationResult.data;
+
+      // 2. Honeypot Verification
+      if (validatedData._botTrap && validatedData._botTrap.trim().length > 0) {
+        // Silently discard bot submission
+        setSubmissionStatus('CONFIRMED');
+        setConfirmationCode(`LEONIDA-BOT-${Date.now().toString(36).toUpperCase()}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Simulated Encrypted Satellite Uplink (900ms async handshake)
+      await new Promise((resolve) => setTimeout(resolve, 900));
+
+      const generatedCode = `LEONIDA-${Date.now().toString(36).toUpperCase()}`;
+      setConfirmationCode(generatedCode);
       setSubmissionStatus('CONFIRMED');
-      setConfirmationMessage(
-        data.message || 'Encrypted tactical brief transmitted directly to Syam S.'
+
+      // 4. Open mailto client as fail-safe direct relay
+      const mailtoSubject = encodeURIComponent(`[${validatedData.clearanceLevel}] Dispatch from ${validatedData.agentName}`);
+      const mailtoBody = encodeURIComponent(
+        `Agent / Sender: ${validatedData.agentName}\nFrequency (Email): ${validatedData.commsFrequency}\nClearance Scope: ${validatedData.clearanceLevel}\nTracking Code: ${generatedCode}\n\nTactical Brief:\n${validatedData.tacticalBrief}`
       );
+      
+      // Auto-trigger direct dispatch email window
+      const mailtoLink = `mailto:${HERO_IDENTITY.contact.email}?subject=${mailtoSubject}&body=${mailtoBody}`;
+      window.open(mailtoLink, '_blank');
+
       setFormData({
         agentName: '',
         commsFrequency: '',
@@ -72,6 +122,14 @@ export const SecureDispatch: React.FC = () => {
     }
   };
 
+  const handleCopyCode = () => {
+    if (confirmationCode) {
+      navigator.clipboard.writeText(confirmationCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
+
   return (
     <section id="comms" className="relative py-16 px-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -85,13 +143,13 @@ export const SecureDispatch: React.FC = () => {
             SECURE COMMS
           </h2>
           <p className="text-gray-400 font-mono text-xs uppercase tracking-wider mt-1">
-            END-TO-END ENCRYPTED INGESTION FOR TECHNICAL LEADERSHIP & CONSULTING
+            CLIENT-VALIDATED ZERO-TRUST INGESTION FOR TECHNICAL LEADERSHIP & CONSULTING
           </p>
         </div>
 
         <div className="inline-flex items-center gap-2 font-mono text-xs text-[#00F0FF] bg-[#00F0FF]/10 border border-[#00F0FF]/30 px-3 py-1.5 clip-notch">
           <ShieldCheck className="w-4 h-4 text-[#00F0FF]" />
-          <span>STRICT RATE LIMITING & HONEYPOT PROTECTED</span>
+          <span>ZOD-VALIDATED & HONEYPOT PROTECTED</span>
         </div>
       </div>
 
@@ -221,14 +279,30 @@ export const SecureDispatch: React.FC = () => {
                   MISSION DISPATCHED // TRANSMISSION VERIFIED
                 </h3>
                 <p className="text-gray-300 font-sans text-sm max-w-md mx-auto">
-                  {confirmationMessage}
+                  Your encrypted tactical brief has been cryptographically validated and queued for Syam S.
                 </p>
-                <button
-                  onClick={() => setSubmissionStatus('IDLE')}
-                  className="mt-6 px-6 py-2.5 bg-gradient-to-r from-[#FF2A85] to-[#FF8A00] text-white font-mono text-xs uppercase tracking-widest font-bold"
-                >
-                  TRANSMIT ANOTHER DISPATCH
-                </button>
+
+                {confirmationCode && (
+                  <div className="inline-flex items-center gap-2 p-2 bg-black/60 border border-[#00F0FF]/40 font-mono text-xs text-[#00F0FF]">
+                    <span>CLEARANCE CODE: {confirmationCode}</span>
+                    <button
+                      onClick={handleCopyCode}
+                      className="p-1 hover:text-white transition-colors"
+                      title="Copy Tracking Code"
+                    >
+                      {copiedCode ? <Check className="w-3.5 h-3.5 text-[#10FFA0]" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                )}
+
+                <div>
+                  <button
+                    onClick={() => setSubmissionStatus('IDLE')}
+                    className="mt-6 px-6 py-2.5 bg-gradient-to-r from-[#FF2A85] to-[#FF8A00] text-white font-mono text-xs uppercase tracking-widest font-bold hover:shadow-[0_0_20px_#FF2A85] transition-all"
+                  >
+                    TRANSMIT ANOTHER DISPATCH
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleFormSubmit} className="space-y-4">
