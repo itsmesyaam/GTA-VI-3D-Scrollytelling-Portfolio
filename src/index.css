@@ -7,27 +7,49 @@
     --vice-magenta: #FF2A85;
     --vice-cyan: #00F0FF;
     --vice-amber: #FF8A00;
-    --obsidian-bg: #07070C;
+    --obsidian-bg: #05050A;
     --obsidian-card: #0C0E16;
   }
 
-  html {
-    scroll-behavior: smooth;
-    background-color: #07070C;
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #05050A;
     color: #F3F4F6;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Lenis recommended css */
+  html.lenis, html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  .lenis.lenis-scrolling iframe {
+    pointer-events: none;
   }
 
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   ::-webkit-scrollbar-track {
-    background: #07070C;
+    background: #05050A;
   }
   ::-webkit-scrollbar-thumb {
     background: #141724;
-    border-radius: 0px;
     border: 1px solid rgba(0, 240, 255, 0.2);
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -58,12 +80,12 @@
   );
 }
 
-/* Ambient Radar Sweep Keyframes */
-@keyframes radarSweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+/* Cinema Letterbox Vignette */
+.cinema-vignette {
+  background: radial-gradient(circle at center, transparent 35%, rgba(5, 5, 10, 0.85) 100%);
+}
+
+.cinema-scanlines {
+  background: linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 4px;
 }

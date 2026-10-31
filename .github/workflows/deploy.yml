@@ -33,18 +33,11 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Build static export
-        env:
-          NODE_ENV: production
+      - name: Build Vite static bundle
         run: npm run build
 
-      - name: Create .nojekyll in build output
-        run: |
-          if [ -d "out" ]; then
-            touch out/.nojekyll
-          elif [ -d "dist" ]; then
-            touch dist/.nojekyll
-          fi
+      - name: Ensure .nojekyll in dist output
+        run: touch dist/.nojekyll
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -52,7 +45,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ hashFiles('next.config.*') != '' && './out' || './dist' }}
+          path: './dist'
 
   deploy:
     environment:
